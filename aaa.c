@@ -112,6 +112,9 @@ unsigned int get_addr (struct iprange *ipr)
             {
                 /* Found an IP in an ALLOW range, check to be sure it is
                    consistant through the remaining regions */
+                if(gconfig.randip)
+                    x = (rand() % (ntohl (ipr->end) - ntohl (ipr->start) + 1))
+                            + ntohl (ipr->start);
                 if (!ip_used (x))
                 {
                     status = SENSE_ALLOW;
