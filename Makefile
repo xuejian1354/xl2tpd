@@ -69,6 +69,12 @@ OSFLAGS+= -DUSE_KERNEL
 #
 #OSFLAGS?= -DFREEBSD
 #
+# Uncomment the next three lines for NetBSD
+#
+#OSFLAGS?= -DNETBSD
+#CFLAGS+= -D_NETBSD_SOURCE
+#LDLIBS?= -lutil
+#
 # Uncomment the next line for Solaris. For solaris, at least,
 # we don't want to specify -I/usr/include because it is in
 # the basic search path, and will over-ride some gcc-specific
@@ -91,7 +97,7 @@ OSFLAGS+= -DUSE_KERNEL
 
 IPFLAGS?= -DIP_ALLOCATION
 
-CFLAGS+= $(DFLAGS) -O2 -fno-builtin -Wall -DSANITY $(OSFLAGS) $(IPFLAGS)
+CFLAGS+= $(DFLAGS) -Os -Wall -DSANITY $(OSFLAGS) $(IPFLAGS)
 HDRS=l2tp.h avp.h misc.h control.h call.h scheduler.h file.h aaa.h md5.h
 OBJS=xl2tpd.o pty.o misc.o control.o avp.o call.o network.o avpsend.o scheduler.o file.o aaa.o md5.o
 SRCS=${OBJS:.o=.c} ${HDRS}
@@ -130,6 +136,7 @@ install: ${EXEC} pfc ${CONTROL_EXEC}
 	install -d -m 0755 ${MANDIR}/man5
 	install -d -m 0755 ${MANDIR}/man8
 	install -m 0644 doc/xl2tpd.8 ${MANDIR}/man8/
+	install -m 0644 doc/xl2tpd-control.8 ${MANDIR}/man8/
 	install -m 0644 doc/xl2tpd.conf.5 doc/l2tp-secrets.5 \
 		 ${MANDIR}/man5/
 	# pfc
