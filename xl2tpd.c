@@ -1634,7 +1634,7 @@ void usage(void) {
     printf("\nxl2tpd version:  %s\n", SERVER_VERSION);
     printf("Usage: xl2tpd [-c <config file>] [-s <secret file>] [-p <pid file>]\n"
             "              [-C <control file>] [-D] [-l] [-q <tos decimal value for control>]\n"
-            "              [--randip] [-v, --version]\n");
+            "              [--norandip] [-v, --version]\n");
     printf("\n");
     exit(1);
 }
@@ -1665,7 +1665,7 @@ void init_args(int argc, char *argv[])
     strncpy(gconfig.controlfile,CONTROL_PIPE,
             sizeof(gconfig.controlfile) - 1);
     gconfig.ipsecsaref = 0;
-	gconfig.randip = 0;
+    gconfig.randip = 1;
 
     for (i = 1; i < argc; i++) {
         if ((! strncmp(argv[i],"--version",9))
@@ -1721,8 +1721,8 @@ void init_args(int argc, char *argv[])
                 }
             }
         }
-        else if (! strncmp(argv[i],"--randip",8)) {
-            gconfig.randip=1;
+        else if (! strncmp(argv[i],"--norandip",10)) {
+            gconfig.randip=0;
         }
         else {
             usage();
