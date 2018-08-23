@@ -55,6 +55,27 @@ int init_config ()
     laclist = NULL;
     deflac = (struct lac *) calloc (1, sizeof (struct lac));
 
+    if(gconfig.connect_lns)
+    {
+        struct lac *tc = new_lac ();
+        if (!tc)
+        return -1;
+        tc->next = laclist;
+        laclist = tc;
+
+        parse_one_option("lns", gconfig.connect_host,
+            CONTEXT_LAC|CONTEXT_DEFAULT, tc);
+        parse_one_option("autodial", "yes",
+            CONTEXT_LAC|CONTEXT_DEFAULT, tc);
+        parse_one_option("length bit", "yes",
+            CONTEXT_LAC|CONTEXT_DEFAULT, tc);
+        parse_one_option("ppp debug", "yes",
+            CONTEXT_LAC|CONTEXT_DEFAULT, tc);
+        parse_one_option("pppoptfile", gconfig.connect_pppdconf,
+            CONTEXT_LAC|CONTEXT_DEFAULT, tc);
+        return 0;
+    }
+
     f = fopen (gconfig.configfile, "r");
     if (!f) 
     {

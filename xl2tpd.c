@@ -1634,7 +1634,8 @@ void usage(void) {
     printf("\nxl2tpd version:  %s\n", SERVER_VERSION);
     printf("Usage: xl2tpd [-c <config file>] [-s <secret file>] [-p <pid file>]\n"
             "              [-C <control file>] [-D] [-l] [-q <tos decimal value for control>]\n"
-            "              [--norandip] [-v, --version]\n");
+            "              [--clns <lns address> <pppd conf file>]\n"
+            "              [--randip] [-v, --version]\n");
     printf("\n");
     exit(1);
 }
@@ -1652,6 +1653,8 @@ void init_args(int argc, char *argv[])
     memset(gconfig.pidfile,0,STRLEN);
     memset(gconfig.controlfile,0,STRLEN);
     memset(gconfig.controltos,0,STRLEN);
+    memset(gconfig.connect_host,0,STRLEN);
+    memset(gconfig.connect_pppdconf,0,STRLEN);
     strncpy(gconfig.altauthfile,ALT_DEFAULT_AUTH_FILE,
             sizeof(gconfig.altauthfile) - 1);
     strncpy(gconfig.altconfigfile,ALT_DEFAULT_CONFIG_FILE,
@@ -1665,7 +1668,8 @@ void init_args(int argc, char *argv[])
     strncpy(gconfig.controlfile,CONTROL_PIPE,
             sizeof(gconfig.controlfile) - 1);
     gconfig.ipsecsaref = 0;
-    gconfig.randip = 1;
+    gconfig.randip = 0;
+    gconfig.connect_lns = 0;
 
     for (i = 1; i < argc; i++) {
         if ((! strncmp(argv[i],"--version",9))
@@ -1721,8 +1725,23 @@ void init_args(int argc, char *argv[])
                 }
             }
         }
-        else if (! strncmp(argv[i],"--norandip",10)) {
-            gconfig.randip=0;
+        else if (! strncmp(argv[i],"--randip",8)) {
+            gconfig.randip=1;
+        }
+        else if (! strncmp(argv[i],"--clns",6)) {
+            if(++i >= argc-1)
+            {
+                usage();
+                i++;
+            }
+            else
+            {
+                gconfig.connect_lns = 1;
+                strncpy(gconfig.connect_host,argv[i++],
+                        sizeof(gconfig.connect_host) - 1);
+                strncpy(gconfig.connect_pppdconf,argv[i],
+                        sizeof(gconfig.connect_pppdconf) - 1);
+            }
         }
         else {
             usage();
