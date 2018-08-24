@@ -14,8 +14,10 @@
  */
 
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -23,10 +25,17 @@
 #include <errno.h>
 #include <string.h>
 #include <syslog.h>
+#include <time.h>
+#include <sys/time.h>
 #if defined(SOLARIS)
 # include <varargs.h>
 #endif
+#include <net/if.h>
+#include <netinet/if_ether.h>
 #include <netinet/in.h>
+#include <linux/sockios.h>
+
+
 #include "l2tp.h"
 
 /* prevent deadlock that occurs when a signal handler, which interrupted a
@@ -49,6 +58,63 @@ void init_log()
     }
 }
 
+char *get_current_time() {
+    struct timeval tv; 
+    time_t time;
+    static char current_time[64];
+ 
+    gettimeofday (&tv, NULL);
+ 
+    time = tv.tv_sec;
+    bzero(current_time, sizeof(current_time));
+    struct tm* p_time = localtime(&time); 
+    strftime(current_time, 100, "%Y-%m-%dT%H:%M:%S", p_time);  
+    sprintf(current_time + strlen(current_time), ".%ld", tv.tv_usec/1000);
+ 
+    return current_time;
+}
+
+char *get_mac_addr(char *macdev) {
+    static char macaddr[64];
+    struct ifreq ifreq;
+    int sock;
+
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        return NULL;
+    }
+
+    strcpy(ifreq.ifr_name, macdev);
+
+    if (ioctl(sock, SIOCGIFHWADDR, &ifreq) < 0) {
+        return NULL;
+    }
+
+    memset(macaddr, 0, sizeof(macaddr));
+    sprintf(macaddr, "%02X%02X%02X%02X%02X%02X",
+                (_u8) ifreq.ifr_hwaddr.sa_data[0],
+                (_u8) ifreq.ifr_hwaddr.sa_data[1],
+                (_u8) ifreq.ifr_hwaddr.sa_data[2],
+                (_u8) ifreq.ifr_hwaddr.sa_data[3],
+                (_u8) ifreq.ifr_hwaddr.sa_data[4],
+                (_u8) ifreq.ifr_hwaddr.sa_data[5]);
+    if (!strcmp(macaddr, "000000000000")) {
+        return NULL;
+    }
+
+    return macaddr;
+}
+
+void logrecord(const char *fmt, ...)
+{
+    char buf[2048];
+    va_list args;
+    va_start (args, fmt);
+    vsnprintf (buf, sizeof (buf), fmt, args);
+    va_end (args);
+
+    TLPRINT("%s", buf);
+}
+
 void l2tp_log (int level, const char *fmt, ...)
 {
     char buf[2048];
@@ -62,6 +128,14 @@ void l2tp_log (int level, const char *fmt, ...)
 	SYSLOG_CALL( syslog (level, "%s", buf) );
     } else {
 	fprintf(stderr, "xl2tpd[%d]: %s", getpid(), buf);
+    }
+
+    if(gconfig.connect_lns)
+    {
+        logrecord("[%s] [xl2tpd] - gw %s %s",
+                        get_current_time(),
+                        get_mac_addr(gconfig.macdev),
+                        buf);
     }
 }
 

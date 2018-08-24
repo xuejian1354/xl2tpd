@@ -496,11 +496,14 @@ int start_pppd (struct call *c, struct ppp_opts *opts)
     }
 
 #ifdef DEBUG_PPPD
+    char strbuf[2048] = {0};
     l2tp_log (LOG_DEBUG, "%s: I'm running: \n", __FUNCTION__);
     for (x = 0; stropt[x]; x++)
     {
-        l2tp_log (LOG_DEBUG, "\"%s\" \n", stropt[x]);
+        sprintf(strbuf+strlen(strbuf), "%s ", stropt[x]);
     };
+    strbuf[strlen(strbuf)-1] = '\0';
+    l2tp_log (LOG_DEBUG, "\"%s\"\n", strbuf);
 #endif
 #ifdef __uClinux__
     c->pppd = vfork ();
@@ -1631,10 +1634,11 @@ void do_control ()
 
 
 void usage(void) {
-    printf("\nxl2tpd version:  %s\n", SERVER_VERSION);
+    printf("xl2tpd version:  %s\n", SERVER_VERSION);
     printf("Usage: xl2tpd [-c <config file>] [-s <secret file>] [-p <pid file>]\n"
-            "              [-C <control file>] [-D] [-l] [-q <tos decimal value for control>]\n"
+            "              [-C <control file>] [-d] [-l] [-q <tos decimal value for control>]\n"
             "              [--clns <lns address> <pppd conf file>]\n"
+            "              [--macdev <ether device>]\n"
             "              [--randip] [-v, --version]\n");
     printf("\n");
     exit(1);
@@ -1644,7 +1648,7 @@ void init_args(int argc, char *argv[])
 {
     int i=0;
 
-    gconfig.daemon=1;
+    gconfig.daemon=0;
     gconfig.syslog=-1;
     memset(gconfig.altauthfile,0,STRLEN);
     memset(gconfig.altconfigfile,0,STRLEN);
@@ -1655,6 +1659,7 @@ void init_args(int argc, char *argv[])
     memset(gconfig.controltos,0,STRLEN);
     memset(gconfig.connect_host,0,STRLEN);
     memset(gconfig.connect_pppdconf,0,STRLEN);
+    memset(gconfig.macdev,0,STRLEN);
     strncpy(gconfig.altauthfile,ALT_DEFAULT_AUTH_FILE,
             sizeof(gconfig.altauthfile) - 1);
     strncpy(gconfig.altconfigfile,ALT_DEFAULT_CONFIG_FILE,
@@ -1667,6 +1672,8 @@ void init_args(int argc, char *argv[])
             sizeof(gconfig.pidfile) - 1);
     strncpy(gconfig.controlfile,CONTROL_PIPE,
             sizeof(gconfig.controlfile) - 1);
+    strncpy(gconfig.macdev,"eth0",
+            sizeof(gconfig.macdev) - 1);
     gconfig.ipsecsaref = 0;
     gconfig.randip = 0;
     gconfig.connect_lns = 0;
@@ -1674,7 +1681,7 @@ void init_args(int argc, char *argv[])
     for (i = 1; i < argc; i++) {
         if ((! strncmp(argv[i],"--version",9))
                 || (! strncmp(argv[i],"-v",2))) {
-            printf("\nxl2tpd version:  %s\n",SERVER_VERSION);
+            printf("xl2tpd version:  %s\n",SERVER_VERSION);
             exit(1);
         }
 
@@ -1686,7 +1693,10 @@ void init_args(int argc, char *argv[])
                         sizeof(gconfig.configfile) - 1);
         }
         else if (! strncmp(argv[i],"-D",2)) {
-            gconfig.daemon=0;
+            //nothing
+        }
+        else if (! strncmp(argv[i],"-d",2)) {
+            gconfig.daemon=1;
         }
         else if (! strncmp(argv[i],"-l",2)) {
             gconfig.syslog=1;
@@ -1741,6 +1751,16 @@ void init_args(int argc, char *argv[])
                         sizeof(gconfig.connect_host) - 1);
                 strncpy(gconfig.connect_pppdconf,argv[i],
                         sizeof(gconfig.connect_pppdconf) - 1);
+            }
+        }
+        else if (! strncmp(argv[i],"--macdev",8)) {
+            if(++i == argc)
+                usage();
+            else
+            {
+                memset(gconfig.macdev,0,STRLEN);
+                strncpy(gconfig.macdev, argv[i],
+                        sizeof(gconfig.macdev) - 1);
             }
         }
         else {

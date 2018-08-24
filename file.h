@@ -172,6 +172,7 @@ struct global
     int connect_lns;   /* Connect lns directly by args */
     char connect_host[STRLEN];		   /* Connect host address */
     char connect_pppdconf[STRLEN];	   /* Connect pppd connect file */
+    char macdev[STRLEN];	   /* Ether device for get mac addr */
 };
 
 extern struct global gconfig;   /* Global configuration options */

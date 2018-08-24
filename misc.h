@@ -17,6 +17,17 @@
 
 #include <syslog.h>
 
+#define TMP_LOG "/tmp/xbl2tp.log"
+
+#define TLPRINT(format, args...)  \
+do {  \
+    FILE *fp = NULL;    \
+    if((fp = fopen(TMP_LOG, "a+")) != NULL) {   \
+        fprintf(fp, format, ##args);  \
+        fclose(fp); \
+    }   \
+} while(0)
+
 struct tunnel;
 struct buffer
 {
@@ -61,6 +72,7 @@ struct ppp_opts
 #define halt() printf("Halted.\n") ; for(;;)
 
 extern char hostname[];
+extern void logrecord (const char *fmt, ...);
 extern void l2tp_log (int level, const char *fmt, ...);
 extern struct buffer *new_buf (int);
 extern void udppush_handler (int);
