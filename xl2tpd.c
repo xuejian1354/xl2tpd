@@ -1751,6 +1751,7 @@ void init_args(int argc, char *argv[])
                         sizeof(gconfig.connect_host) - 1);
                 strncpy(gconfig.connect_pppdconf,argv[i],
                         sizeof(gconfig.connect_pppdconf) - 1);
+                logrecord("\n");
             }
         }
         else if (! strncmp(argv[i],"--macdev",8)) {

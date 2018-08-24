@@ -267,7 +267,7 @@ void call_close (struct call *c)
             /* Really close this tunnel, as our
                StopCCN has been ACK'd */
 #ifdef DEBUG_CLOSE
-            l2tp_log (LOG_DEBUG, "%s: Actually closing tunnel %d\n\n", __FUNCTION__,
+            l2tp_log (LOG_DEBUG, "%s: Actually closing tunnel %d\n", __FUNCTION__,
                  c->container->ourtid);
 #endif
             destroy_tunnel (c->container);
@@ -317,7 +317,7 @@ void call_close (struct call *c)
             tmp = tmp2;
         }
         l2tp_log (LOG_INFO,
-             "Connection %d closed to %s, port %d (%s)\n\n",
+             "Connection %d closed to %s, port %d (%s)\n",
              c->container->tid,
              IPADDY (c->container->peer.sin_addr),
              ntohs (c->container->peer.sin_port), c->errormsg);
@@ -367,7 +367,7 @@ void call_close (struct call *c)
              __FUNCTION__, c->ourcid);
 #endif
         control_xmit (buf);
-        l2tp_log (LOG_INFO, "%s: Call %d to %s disconnected\n\n", __FUNCTION__,
+        l2tp_log (LOG_INFO, "%s: Call %d to %s disconnected\n", __FUNCTION__,
              c->ourcid, IPADDY (c->container->peer.sin_addr));
     }
     /*
