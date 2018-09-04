@@ -67,6 +67,8 @@ int init_config ()
             CONTEXT_LAC|CONTEXT_DEFAULT, tc);
         parse_one_option("autodial", "yes",
             CONTEXT_LAC|CONTEXT_DEFAULT, tc);
+        parse_one_option("redial", "yes",
+            CONTEXT_LAC|CONTEXT_DEFAULT, tc);
         parse_one_option("length bit", "yes",
             CONTEXT_LAC|CONTEXT_DEFAULT, tc);
         parse_one_option("ppp debug", "yes",
