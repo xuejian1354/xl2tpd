@@ -112,7 +112,7 @@ void logrecord(const char *fmt, ...)
     vsnprintf (buf, sizeof (buf), fmt, args);
     va_end (args);
 
-    TLPRINT("%s", buf);
+    //TLPRINT("%s", buf);
 }
 
 void l2tp_log (int level, const char *fmt, ...)

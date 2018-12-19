@@ -168,11 +168,13 @@ struct global
 				 * Changed in SAref patch in openswan 2.6.36 for linux 2.6.36+ */
     int max_retries;            /* Max retries before closing tunnel
                                    or stop re-transmitting */
-    int randip; 			   /* Use ip random */
-    int connect_lns;   /* Connect lns directly by args */
-    char connect_host[STRLEN];		   /* Connect host address */
-    char connect_pppdconf[STRLEN];	   /* Connect pppd connect file */
-    char macdev[STRLEN];	   /* Ether device for get mac addr */
+    int randip;                 /* Use ip random */
+    int noctrl;                 /* Close control frome pipe */
+    int connect_lns;            /* Connect lns directly by args */
+    char connect_host[STRLEN];  /* Connect host address */
+    char connect_pppdconf[STRLEN];  /* Connect pppd connect file */
+    char macdev[STRLEN];        /* Ether device for get mac addr */
+    int epoll_size;             /* Use epoll max size */
 };
 
 extern struct global gconfig;   /* Global configuration options */

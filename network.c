@@ -21,6 +21,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/epoll.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #ifndef LINUX
@@ -431,10 +432,108 @@ int build_fdset (fd_set *readfds)
 	FD_SET (server_socket, readfds);
 	if (server_socket > max)
 		max = server_socket;
-	FD_SET (control_fd, readfds);
-	if (control_fd > max)
-		max = control_fd;
+	if(!gconfig.connect_lns && !gconfig.noctrl)
+	{
+		FD_SET (control_fd, readfds);
+		if (control_fd > max)
+			max = control_fd;
+	}
 	return max;
+}
+
+int build_epoll (int esize)
+{
+	int kdpfd;
+	struct epoll_event ev;
+	struct tunnel *tun;
+	struct call *call;
+
+	tun = tunnels.head;
+	kdpfd = epoll_create(esize);
+
+	while (tun)
+	{
+		if (tun->udp_fd > -1) {
+			ev.events = EPOLLIN | EPOLLET;
+			ev.data.fd = tun->udp_fd;
+			if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, tun->udp_fd, &ev) < 0)
+			{
+				fprintf(stderr, "epoll set tunnel insertion error: fd=%d/n", tun->udp_fd);
+				return -1;
+			}
+		}
+		call = tun->call_head;
+		while (call)
+		{
+			if (call->needclose ^ call->closing)
+			{
+				call_close (call);
+				call = tun->call_head;
+				if (!call)
+					break;
+				continue;
+			}
+			if (call->fd > -1)
+			{
+				if (!call->needclose && !call->closing)
+				{
+					ev.events = EPOLLIN | EPOLLET;
+					ev.data.fd = call->fd;
+					if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, call->fd, &ev) < 0)
+					{
+						fprintf(stderr, "epoll callback set insertion error: fd=%d/n", call->fd);
+						return -1;
+					}
+				}
+			}
+			call = call->next;
+		}
+		/* Now that call fds have been collected, and checked for
+		 * closing, check if the tunnel needs to be closed too
+		 */
+		if (tun->self->needclose ^ tun->self->closing)
+		{
+			if (gconfig.debug_tunnel)
+				l2tp_log (LOG_DEBUG, "%s: closing down tunnel %d\n",
+						__FUNCTION__, tun->ourtid);
+			call_close (tun->self);
+			/* Reset the while loop
+			 * and check for NULL */
+			tun = tunnels.head;
+			if (!tun)
+				break;
+			continue;
+		}
+		tun = tun->next;
+	}
+	ev.events = EPOLLIN | EPOLLET;
+	ev.data.fd = server_socket;
+	if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, server_socket, &ev) < 0)
+	{
+		fprintf(stderr, "epoll set server insertion error: fd=%d/n", server_socket);
+		return -1;
+	}
+	if(!gconfig.connect_lns && !gconfig.noctrl)
+	{
+		ev.events = EPOLLIN | EPOLLET;
+		ev.data.fd = control_fd;
+		if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, control_fd, &ev) < 0)
+		{
+			fprintf(stderr, "epoll set control insertion error: fd=%d/n", control_fd);
+			return -1;
+		}
+	}
+	return kdpfd;
+}
+
+int mfd_isset(int fd, int mfd, fd_set *preadfds)
+{
+	if(gconfig.epoll_size > 0)
+	{
+		return (fd == mfd);
+	}
+	else
+		return FD_ISSET (fd, preadfds);
 }
 
 void network_thread ()
@@ -460,6 +559,9 @@ void network_thread ()
     unsigned int refme, refhim;
     int * currentfd;
     int server_socket_processed;
+    int i, epfd;
+    int esize = gconfig.epoll_size;
+    struct epoll_event events[esize];
 
     /* This one buffer can be recycled for everything except control packets */
     buf = new_buf (MAX_RECV_SIZE);
@@ -471,9 +573,24 @@ void network_thread ()
     {
         int ret;
         process_signal();
-        max = build_fdset (&readfds);
         ptv = process_schedule(&tv);
-        ret = select (max + 1, &readfds, NULL, NULL, ptv);
+        if(esize > 0)
+        {
+            epfd = build_epoll(esize);
+
+            int wtime = -1;
+            if(ptv != NULL)
+            {
+                int ptime = ptv->tv_sec*1000 + ptv->tv_usec/1000;
+                if(ptime > 0) wtime = ptime;
+            }
+            ret = epoll_wait(epfd, events, esize, wtime);
+        }
+        else
+        {
+            max = build_fdset (&readfds);
+            ret = select (max + 1, &readfds, NULL, NULL, ptv);
+        }
         if (ret <= 0)
         {
             if (ret == 0)
@@ -494,9 +611,25 @@ void network_thread ()
                         __FUNCTION__, errno, strerror (errno));
                 }
             }
+            if(esize > 0) close(epfd);
             continue;
         }
-        if (FD_ISSET (control_fd, &readfds))
+        if(esize > 0)
+        {
+            max = ret;
+        }
+        else
+        {
+            max = 1;
+        }
+
+        for(i=0; i<max; i++)
+        {
+        if(esize > 0 && !(events[i].events & EPOLLIN))
+            continue;
+        int mfd = events[i].data.fd;
+        if (!gconfig.connect_lns && !gconfig.noctrl
+            && mfd_isset (control_fd, mfd, &readfds))
         {
             do_control ();
         }
@@ -515,7 +648,7 @@ void network_thread ()
                 currentfd = &server_socket;
                 server_socket_processed = 1;
             }
-            if (FD_ISSET (*currentfd, &readfds))
+            if (mfd_isset (*currentfd, mfd, &readfds))
         {
             /*
              * Okay, now we're ready for reading and processing new data.
@@ -679,7 +812,7 @@ void network_thread ()
             sc = st->call_head;
             while (sc)
             {
-                if ((sc->fd >= 0) && FD_ISSET (sc->fd, &readfds))
+                if ((sc->fd >= 0) && mfd_isset (sc->fd, mfd, &readfds))
                 {
                     /* Got some payload to send */
                     int result;
@@ -729,8 +862,9 @@ void network_thread ()
             }
             st = st->next;
         }
+        }
     }
-
+    if(esize > 0) close(epfd);
 }
 
 #ifdef USE_KERNEL

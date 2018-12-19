@@ -564,7 +564,7 @@ int start_pppd (struct call *c, struct ppp_opts *opts)
             close (server_socket);
 
         /* close the control pipe fd */
-        if(control_fd!=-1)
+        if(control_fd!=-1 && !gconfig.connect_lns && !gconfig.noctrl)
             close (control_fd);
 
         if( c->dialing[0] )
@@ -1639,7 +1639,9 @@ void usage(void) {
             "              [-C <control file>] [-d] [-l] [-q <tos decimal value for control>]\n"
             "              [--clns <lns address> <pppd conf file>]\n"
             "              [--macdev <ether device>]\n"
-            "              [--randip] [-v, --version]\n");
+            "              [--esize <epoll size>]\n"
+            "              [--noctrl] [--randip]\n"
+            "              [-v, --version]\n");
     printf("\n");
     exit(1);
 }
@@ -1677,6 +1679,7 @@ void init_args(int argc, char *argv[])
     gconfig.ipsecsaref = 0;
     gconfig.randip = 0;
     gconfig.connect_lns = 0;
+    gconfig.epoll_size = 0;
 
     for (i = 1; i < argc; i++) {
         if ((! strncmp(argv[i],"--version",9))
@@ -1738,6 +1741,9 @@ void init_args(int argc, char *argv[])
         else if (! strncmp(argv[i],"--randip",8)) {
             gconfig.randip=1;
         }
+        else if (! strncmp(argv[i],"--noctrl",8)) {
+            gconfig.noctrl=1;
+        }
         else if (! strncmp(argv[i],"--clns",6)) {
             if(++i >= argc-1)
             {
@@ -1762,6 +1768,14 @@ void init_args(int argc, char *argv[])
                 memset(gconfig.macdev,0,STRLEN);
                 strncpy(gconfig.macdev, argv[i],
                         sizeof(gconfig.macdev) - 1);
+            }
+        }
+        else if (! strncmp(argv[i],"--esize",7)) {
+            if(++i == argc)
+                usage();
+            else
+            {
+                gconfig.epoll_size = atoi(argv[i]);
             }
         }
         else {
@@ -1860,6 +1874,11 @@ static void consider_pidfile() {
 
 static void open_controlfd()
 {
+    if(gconfig.connect_lns || gconfig.noctrl)
+    {
+        return;
+    }
+
     control_fd = open (gconfig.controlfile, O_RDONLY | O_NONBLOCK, 0600);
     if (control_fd < 0)
     {
