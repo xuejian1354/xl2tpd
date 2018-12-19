@@ -460,7 +460,6 @@ int build_epoll (int esize)
 			if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, tun->udp_fd, &ev) < 0)
 			{
 				fprintf(stderr, "epoll set tunnel insertion error: fd=%d/n", tun->udp_fd);
-				return -1;
 			}
 		}
 		call = tun->call_head;
@@ -483,7 +482,6 @@ int build_epoll (int esize)
 					if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, call->fd, &ev) < 0)
 					{
 						fprintf(stderr, "epoll callback set insertion error: fd=%d/n", call->fd);
-						return -1;
 					}
 				}
 			}
@@ -512,7 +510,6 @@ int build_epoll (int esize)
 	if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, server_socket, &ev) < 0)
 	{
 		fprintf(stderr, "epoll set server insertion error: fd=%d/n", server_socket);
-		return -1;
 	}
 	if(!gconfig.connect_lns && !gconfig.noctrl)
 	{
@@ -521,7 +518,6 @@ int build_epoll (int esize)
 		if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, control_fd, &ev) < 0)
 		{
 			fprintf(stderr, "epoll set control insertion error: fd=%d/n", control_fd);
-			return -1;
 		}
 	}
 	return kdpfd;
@@ -863,8 +859,8 @@ void network_thread ()
             st = st->next;
         }
         }
+        if(esize > 0) close(epfd);
     }
-    if(esize > 0) close(epfd);
 }
 
 #ifdef USE_KERNEL
