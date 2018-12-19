@@ -48,6 +48,8 @@ static int syslog_nesting = 0;
     --syslog_nesting;               \
 } while(0)
 
+#define UNUSED(x) (void)(x)
+
 void init_log()
 {
     static int logopen=0;
@@ -224,7 +226,7 @@ void bufferDump (unsigned char *buf, int buflen)
 
 void do_packet_dump (struct buffer *buf)
 {
-    int x;
+    size_t x;
     unsigned char *c = buf->start;
     printf ("packet dump: \nHEX: { ");
     for (x = 0; x < buf->len; x++)
@@ -334,6 +336,8 @@ void opt_destroy (struct ppp_opts *option)
 
 int get_egd_entropy(char *buf, int count)
 {
+    UNUSED(buf);
+    UNUSED(count);
     return -1;
 }
 
