@@ -175,6 +175,7 @@ struct global
     char connect_pppdconf[STRLEN];  /* Connect pppd connect file */
     char macdev[STRLEN];        /* Ether device for get mac addr */
     int epoll_size;             /* Use epoll max size */
+    int listen_port;            /* Change listen port */
 };
 
 extern struct global gconfig;   /* Global configuration options */

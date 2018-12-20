@@ -55,6 +55,11 @@ int init_config ()
     laclist = NULL;
     deflac = (struct lac *) calloc (1, sizeof (struct lac));
 
+    if(gconfig.listen_port)
+    {
+        gconfig.port = gconfig.listen_port;
+    }
+
     if(gconfig.connect_lns)
     {
         struct lac *tc = new_lac ();

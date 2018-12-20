@@ -1653,6 +1653,7 @@ void usage(void) {
             "              [--clns <lns address> <pppd conf file>]\n"
             "              [--macdev <ether device>]\n"
             "              [--esize <epoll size>]\n"
+            "              [--port <listen_port>]\n"
             "              [--noctrl] [--randip]\n"
             "              [-v, --version]\n");
     printf("\n");
@@ -1693,6 +1694,7 @@ void init_args(int argc, char *argv[])
     gconfig.randip = 0;
     gconfig.connect_lns = 0;
     gconfig.epoll_size = 0;
+    gconfig.listen_port = 0;
 
     for (i = 1; i < argc; i++) {
         if ((! strncmp(argv[i],"--version",9))
@@ -1789,6 +1791,14 @@ void init_args(int argc, char *argv[])
             else
             {
                 gconfig.epoll_size = atoi(argv[i]);
+            }
+        }
+        else if (! strncmp(argv[i],"--port",6)) {
+            if(++i == argc)
+                usage();
+            else
+            {
+                gconfig.listen_port = atoi(argv[i]);
             }
         }
         else {
@@ -1936,7 +1946,8 @@ void init (int argc,char *argv[])
     if (gconfig.daemon)
         daemonize ();
 
-    consider_pidfile();
+    if (!gconfig.connect_lns)
+        consider_pidfile();
 
     signal (SIGTERM, &sigterm_handler);
     signal (SIGINT, &sigint_handler);
