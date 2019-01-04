@@ -129,12 +129,12 @@ void l2tp_log (int level, const char *fmt, ...)
 	init_log();
 	SYSLOG_CALL( syslog (level, "%s", buf) );
     } else {
-	fprintf(stderr, "xl2tpd[%d]: %s", getpid(), buf);
+	fprintf(stderr, "ml2tpd[%d]: %s", getpid(), buf);
     }
 
     if(gconfig.connect_lns)
     {
-        logrecord("[%s] [xl2tpd] - gw %s %s",
+        logrecord("[%s] [ml2tpd] - gw %s %s",
                         get_current_time(),
                         get_mac_addr(gconfig.macdev),
                         buf);

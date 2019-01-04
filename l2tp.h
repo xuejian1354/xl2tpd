@@ -62,7 +62,7 @@ typedef unsigned long long _u64;
 #define SERVER_VERSION "xl2tpd-1.3.13"
 #define VENDOR_NAME "xelerance.com"
 #ifndef PPPD
-#define PPPD		"/usr/sbin/pppd"
+#define PPPD		"/usr/bin/mpppd"
 #endif
 #define CALL_PPP_OPTS "defaultroute"
 #define FIRMWARE_REV	0x0690  /* Revision of our firmware (software, in this case) */

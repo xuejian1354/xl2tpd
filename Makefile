@@ -106,7 +106,7 @@ OBJS=xl2tpd.o pty.o misc.o control.o avp.o call.o network.o avpsend.o scheduler.
 SRCS=${OBJS:.o=.c} ${HDRS}
 CONTROL_SRCS=xl2tpd-control.c
 #LIBS= $(OSLIBS) # -lefence # efence for malloc checking
-EXEC=xl2tpd
+EXEC=ml2tpd
 CONTROL_EXEC=xl2tpd-control
 
 PREFIX?=/usr/local

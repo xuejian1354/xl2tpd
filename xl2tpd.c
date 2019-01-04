@@ -1647,8 +1647,8 @@ void do_control ()
 
 
 void usage(void) {
-    printf("xl2tpd version:  %s\n", SERVER_VERSION);
-    printf("Usage: xl2tpd [-c <config file>] [-s <secret file>] [-p <pid file>]\n"
+    printf("ml2tpd version:  %s\n", SERVER_VERSION);
+    printf("Usage: ml2tpd [-c <config file>] [-s <secret file>] [-p <pid file>]\n"
             "              [-C <control file>] [-d] [-l] [-q <tos decimal value for control>]\n"
             "              [--clns <lns address> <pppd conf file>]\n"
             "              [--macdev <ether device>]\n"
@@ -1699,7 +1699,7 @@ void init_args(int argc, char *argv[])
     for (i = 1; i < argc; i++) {
         if ((! strncmp(argv[i],"--version",9))
                 || (! strncmp(argv[i],"-v",2))) {
-            printf("xl2tpd version:  %s\n",SERVER_VERSION);
+            printf("ml2tpd version:  %s\n",SERVER_VERSION);
             exit(1);
         }
 
