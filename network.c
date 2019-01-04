@@ -452,6 +452,21 @@ int build_epoll (int esize)
 	tun = tunnels.head;
 	kdpfd = epoll_create(esize);
 
+	ev.events = EPOLLIN | EPOLLET;
+	ev.data.fd = server_socket;
+	if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, server_socket, &ev) < 0)
+	{
+		fprintf(stderr, "epoll set server insertion error: fd=%d\n", server_socket);
+	}
+	if(!gconfig.connect_lns && !gconfig.noctrl)
+	{
+		ev.events = EPOLLIN | EPOLLET;
+		ev.data.fd = control_fd;
+		if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, control_fd, &ev) < 0)
+		{
+			fprintf(stderr, "epoll set control insertion error: fd=%d\n", control_fd);
+		}
+	}
 	while (tun)
 	{
 		if (tun->udp_fd > -1) {
@@ -459,7 +474,7 @@ int build_epoll (int esize)
 			ev.data.fd = tun->udp_fd;
 			if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, tun->udp_fd, &ev) < 0)
 			{
-				fprintf(stderr, "epoll set tunnel insertion error: fd=%d/n", tun->udp_fd);
+				fprintf(stderr, "epoll set tunnel insertion error: fd=%d\n", tun->udp_fd);
 			}
 		}
 		call = tun->call_head;
@@ -481,7 +496,7 @@ int build_epoll (int esize)
 					ev.data.fd = call->fd;
 					if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, call->fd, &ev) < 0)
 					{
-						fprintf(stderr, "epoll callback set insertion error: fd=%d/n", call->fd);
+						fprintf(stderr, "epoll callback set insertion error: fd=%d\n", call->fd);
 					}
 				}
 			}
@@ -504,21 +519,6 @@ int build_epoll (int esize)
 			continue;
 		}
 		tun = tun->next;
-	}
-	ev.events = EPOLLIN | EPOLLET;
-	ev.data.fd = server_socket;
-	if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, server_socket, &ev) < 0)
-	{
-		fprintf(stderr, "epoll set server insertion error: fd=%d/n", server_socket);
-	}
-	if(!gconfig.connect_lns && !gconfig.noctrl)
-	{
-		ev.events = EPOLLIN | EPOLLET;
-		ev.data.fd = control_fd;
-		if (epoll_ctl(kdpfd, EPOLL_CTL_ADD, control_fd, &ev) < 0)
-		{
-			fprintf(stderr, "epoll set control insertion error: fd=%d/n", control_fd);
-		}
 	}
 	return kdpfd;
 }
