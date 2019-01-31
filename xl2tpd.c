@@ -1650,6 +1650,7 @@ void usage(void) {
     printf("ml2tpd version:  %s\n", SERVER_VERSION);
     printf("Usage: ml2tpd [-c <config file>] [-s <secret file>] [-p <pid file>]\n"
             "              [-C <control file>] [-d] [-l] [-q <tos decimal value for control>]\n"
+            "              [--cln <lns & pppd conf file>]\n"
             "              [--clns <lns address> <pppd conf file>]\n"
             "              [--macdev <ether device>]\n"
             "              [--esize <epoll size>]\n"
@@ -1758,6 +1759,36 @@ void init_args(int argc, char *argv[])
         }
         else if (! strncmp(argv[i],"--noctrl",8)) {
             gconfig.noctrl=1;
+        }
+        else if (! strncmp(argv[i],"--cln",5)) {
+            if(++i == argc)
+            {
+                usage();
+            }
+            else
+            {
+                gconfig.connect_lns = 1;
+                strncpy(gconfig.connect_pppdconf,argv[i],
+                        sizeof(gconfig.connect_pppdconf) - 1);
+
+                FILE *vfp = fopen(gconfig.connect_pppdconf, "r");
+                if(vfp != NULL)
+                {
+                    while(!feof(vfp))
+                    {
+                        char bhost[64] = {0};
+                        if(fgets(bhost, sizeof(bhost), vfp) != NULL
+                          && !strncmp(bhost, "#host ", 6))
+                        {
+                            strncpy(gconfig.connect_host, bhost+6, strlen(bhost)-6);
+                            break;
+                        }
+                    }
+                    fclose(vfp);
+                }
+
+                logrecord("\n");
+            }
         }
         else if (! strncmp(argv[i],"--clns",6)) {
             if(++i >= argc-1)
