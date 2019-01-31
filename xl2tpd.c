@@ -1760,6 +1760,22 @@ void init_args(int argc, char *argv[])
         else if (! strncmp(argv[i],"--noctrl",8)) {
             gconfig.noctrl=1;
         }
+        else if (! strncmp(argv[i],"--clns",6)) {
+            if(++i >= argc-1)
+            {
+                usage();
+                i++;
+            }
+            else
+            {
+                gconfig.connect_lns = 1;
+                strncpy(gconfig.connect_host,argv[i++],
+                        sizeof(gconfig.connect_host) - 1);
+                strncpy(gconfig.connect_pppdconf,argv[i],
+                        sizeof(gconfig.connect_pppdconf) - 1);
+                logrecord("\n");
+            }
+        }
         else if (! strncmp(argv[i],"--cln",5)) {
             if(++i == argc)
             {
@@ -1780,29 +1796,14 @@ void init_args(int argc, char *argv[])
                         if(fgets(bhost, sizeof(bhost), vfp) != NULL
                           && !strncmp(bhost, "#host ", 6))
                         {
-                            strncpy(gconfig.connect_host, bhost+6, strlen(bhost)-6);
+                            strncpy(gconfig.connect_host, bhost + 6,
+                                    strlen(bhost) - 7);
                             break;
                         }
                     }
                     fclose(vfp);
                 }
 
-                logrecord("\n");
-            }
-        }
-        else if (! strncmp(argv[i],"--clns",6)) {
-            if(++i >= argc-1)
-            {
-                usage();
-                i++;
-            }
-            else
-            {
-                gconfig.connect_lns = 1;
-                strncpy(gconfig.connect_host,argv[i++],
-                        sizeof(gconfig.connect_host) - 1);
-                strncpy(gconfig.connect_pppdconf,argv[i],
-                        sizeof(gconfig.connect_pppdconf) - 1);
                 logrecord("\n");
             }
         }
